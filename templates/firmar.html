@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block titulo %}Firmar PDF{% endblock %}
+{% block cuerpo %}
+<h1>2. Firmar un PDF</h1>
+<p class="lead">Sube el documento y tu identidad (<code>.p12</code>). La firma digital se incrusta en el PDF con SHA-256 y RSA. Si el PDF ya tiene firmas, se conservan y se agrega la nueva.</p>
+
+{% if error %}<div class="aviso rojo">{{ error }}</div>{% endif %}
+
+{% if not res %}
+<form method="post" enctype="multipart/form-data" class="formulario">
+  <div class="fila">
+    <label>Documento PDF a firmar <span class="req">*</span>
+      <input type="file" name="pdf" accept="application/pdf,.pdf" required></label>
+    <label>Tu identidad (.p12) <span class="req">*</span>
+      <input type="file" name="p12" accept=".p12,.pfx" required></label>
+  </div>
+  <div class="fila">
+    <label>Contraseña de la identidad <span class="req">*</span>
+      <input type="password" name="contrasena" required autocomplete="off"></label>
+    <label>Motivo de la firma
+      <input name="motivo" maxlength="100" value="{{ valores.motivo or 'Informe A5 - Firma digital' }}"></label>
+  </div>
+  <div class="fila">
+    <label>Lugar
+      <input name="lugar" maxlength="100" value="{{ valores.lugar or 'Cochabamba, Bolivia' }}"></label>
+    <label>Página del recuadro visible (vacío = última)
+      <input name="pagina" inputmode="numeric" pattern="[0-9]*" value="{{ valores.pagina }}" placeholder="última"></label>
+  </div>
+  <label class="check"><input type="checkbox" name="visible" {{ 'checked' if valores.get('visible', True) }}> Mostrar un recuadro de firma visible en la página (la firma digital se incrusta igual aunque no sea visible)</label>
+  <button class="boton" type="submit">Firmar documento</button>
+</form>
+{% else %}
+<div class="aviso verde"><b>Documento firmado correctamente</b> por <b>{{ res.firmante }}</b>.</div>
+<table class="datos">
+  <tr><th>Campo de firma</th><td class="mono">{{ res.campo }}</td></tr>
+  <tr><th>Firmante</th><td>{{ res.firmante }}</td></tr>
+  <tr><th>Huella SHA-256 del certificado</th><td class="mono">{{ res.huella_certificado }}</td></tr>
+  <tr><th>Fecha y hora</th><td>{{ res.fecha_utc|fecha }}</td></tr>
+  <tr><th>Algoritmo</th><td>SHA-256 con RSA · formato adbe.pkcs7.detached</td></tr>
+  <tr><th>Firmas en el documento</th><td>{{ res.firmas_totales }}</td></tr>
+  <tr><th>Recuadro visible</th><td>{{ 'Sí' if res.visible else 'No (firma invisible)' }}</td></tr>
+  <tr><th>SHA-256 del PDF original</th><td class="mono">{{ res.sha256_antes }}</td></tr>
+  <tr><th>SHA-256 del PDF firmado</th><td class="mono">{{ res.sha256_despues }}</td></tr>
+  <tr><th>Tamaño del PDF firmado</th><td>{{ tam }} bytes</td></tr>
+</table>
+<p><a class="boton" href="{{ url_for('descargar', token=token) }}">Descargar {{ nombre_salida }}</a>
+   <a class="boton claro" href="{{ url_for('validar') }}">Continuar: validar la firma &rarr;</a>
+   <a class="boton claro" href="{{ url_for('firmar') }}">Firmar otro / añadir otra firma</a></p>
+<div class="aviso ambar"><b>No modifiques el PDF firmado.</b> Abrirlo y volver a guardarlo, imprimirlo a PDF o editarlo invalida la firma. Para añadir la segunda firma, usa el archivo descargado tal cual en esta misma página.</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block titulo %}Validar firma{% endblock %}
+{% block cuerpo %}
+<h1>3. Validar la firma de un PDF</h1>
+<p class="lead">Sube el PDF firmado. Para confirmar la identidad del firmante, sube también su <b>certificado</b> o su <b>llave pública</b> (<code>.pem</code>); sin ellos la aplicación solo puede comprobar la integridad.</p>
+
+{% if error %}<div class="aviso rojo">{{ error }}</div>{% endif %}
+
+<form method="post" enctype="multipart/form-data" class="formulario">
+  <div class="fila">
+    <label>PDF firmado <span class="req">*</span>
+      <input type="file" name="pdf" accept="application/pdf,.pdf" required></label>
+    <label>Certificados o llaves públicas de confianza (.pem), uno o varios
+      <input type="file" name="confianzas" accept=".pem,.crt,.cer" multiple></label>
+  </div>
+  <button class="boton" type="submit">Validar firmas</button>
+</form>
+
+{% if res %}
+<h2>Resultado para <span class="mono">{{ nombre_pdf }}</span></h2>
+{% if res.estado_global == 'sin_firmas' %}
+  <div class="aviso ambar">{{ res.mensaje }}</div>
+{% else %}
+  <div class="aviso {{ {'valida': 'verde', 'no_confiable': 'ambar', 'alterada': 'rojo'}[res.estado_global] }} grande">{{ res.mensaje }}</div>
+{% endif %}
+<table class="datos">
+  <tr><th>SHA-256 del documento</th><td class="mono">{{ res.sha256_documento }}</td></tr>
+  <tr><th>Firmas encontradas</th><td>{{ res.firmas|length }}</td></tr>
+  <tr><th>Certificados / llaves de confianza aportados</th><td>{{ num_confianzas }}</td></tr>
+</table>
+
+{% for f in res.firmas %}
+<section class="firma {{ {'valida': 'verde', 'no_confiable': 'ambar', 'alterada': 'rojo'}[f.estado] }}">
+  <h3>Firma {{ loop.index }}: {{ f.firmante }}</h3>
+  <p class="veredicto">{{ f.veredicto }}</p>
+  <table class="datos">
+    <tr><th>Integridad</th><td>{{ 'El documento NO fue modificado desde la firma' if f.intacta else 'El documento FUE modificado o la firma está dañada' }}</td></tr>
+    <tr><th>Firma criptográfica</th><td>{{ 'Correcta' if f.valida else 'Incorrecta' }}</td></tr>
+    <tr><th>Identidad del firmante</th><td>{{ 'Confirmada' if f.confiable else 'NO confirmada' }}<br><small>{{ f.como_confia }}</small></td></tr>
+    <tr><th>Firmante (sujeto)</th><td>{{ f.sujeto }}</td></tr>
+    <tr><th>Emisor del certificado</th><td>{{ f.emisor }}</td></tr>
+    <tr><th>Huella SHA-256 del certificado</th><td class="mono">{{ f.huella_certificado }}</td></tr>
+    <tr><th>Algoritmo de hash</th><td>{{ f.algoritmo_hash }}</td></tr>
+    <tr><th>Fecha de la firma</th><td>{{ f.fecha_firma|fecha }}</td></tr>
+    <tr><th>Cobertura</th><td>{{ f.cobertura }}</td></tr>
+    <tr><th>Cambios posteriores</th><td>{{ f.modificaciones }}</td></tr>
+  </table>
+  <details><summary>Detalle técnico</summary><pre class="codigo">{{ f.detalle_tecnico }}</pre></details>
+</section>
+{% endfor %}
+{% endif %}
+{% endblock %}

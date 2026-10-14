@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block titulo %}Generar llaves{% endblock %}
+{% block cuerpo %}
+<h1>1. Generar llaves y certificado</h1>
+<p class="lead">Se crea un par de llaves RSA y un certificado X.509 autofirmado. La llave privada queda protegida con la contraseña que elijas.</p>
+
+{% if error %}<div class="aviso rojo">{{ error }}</div>{% endif %}
+
+{% if not ident %}
+<form method="post" class="formulario">
+  <div class="fila">
+    <label>Nombre completo del titular <span class="req">*</span>
+      <input name="nombre" required minlength="2" maxlength="64" value="{{ valores.nombre }}" placeholder="Daniel Maldonado Céspedes"></label>
+    <label>Organización
+      <input name="organizacion" maxlength="64" value="{{ valores.organizacion if valores.organizacion is not none and valores.get('organizacion') is not none else 'Universidad Domingo Savio' }}"></label>
+  </div>
+  <div class="fila">
+    <label>País (2 letras) <span class="req">*</span>
+      <input name="pais" required pattern="[A-Za-z]{2}" maxlength="2" value="{{ valores.pais or 'BO' }}"></label>
+    <label>Correo electrónico (opcional)
+      <input name="correo" type="email" value="{{ valores.correo }}" placeholder="nombre@ejemplo.com"></label>
+  </div>
+  <div class="fila">
+    <label>Tamaño de la llave RSA
+      <select name="bits">
+        <option value="2048" {{ 'selected' if valores.bits != '3072' }}>2048 bits (recomendado)</option>
+        <option value="3072" {{ 'selected' if valores.bits == '3072' }}>3072 bits</option>
+      </select></label>
+    <label>Validez del certificado (días)
+      <input name="dias" type="number" min="1" max="3650" value="{{ valores.dias or 365 }}"></label>
+  </div>
+  <div class="fila">
+    <label>Contraseña (mínimo 8 caracteres) <span class="req">*</span>
+      <input name="contrasena" type="password" required minlength="8" autocomplete="new-password"></label>
+    <label>Repite la contraseña <span class="req">*</span>
+      <input name="contrasena2" type="password" required minlength="8" autocomplete="new-password"></label>
+  </div>
+  <p class="nota">La contraseña protege tu llave privada y tu archivo <code>.p12</code>. Si la olvidas, no se puede recuperar. No se guarda en ningún lado.</p>
+  <button class="boton" type="submit">Generar llaves y certificado</button>
+</form>
+{% else %}
+<div class="aviso verde"><b>Listo.</b> Se generaron las llaves y el certificado de <b>{{ ident.nombre }}</b>. Descarga los archivos ahora: la aplicación no los guarda.</div>
+
+<h2>Datos del certificado</h2>
+<table class="datos">
+  <tr><th>Titular (sujeto)</th><td>{{ ident.sujeto }}</td></tr>
+  <tr><th>Algoritmo</th><td>RSA de {{ ident.bits }} bits, firma SHA-256 (sha256WithRSAEncryption)</td></tr>
+  <tr><th>Válido desde</th><td>{{ ident.valido_desde|fecha }}</td></tr>
+  <tr><th>Válido hasta</th><td>{{ ident.valido_hasta|fecha }}</td></tr>
+  <tr><th>Número de serie</th><td class="mono">{{ ident.serie_hex }}</td></tr>
+  <tr><th>Huella SHA-256 del certificado</th><td class="mono">{{ ident.huella_certificado }}</td></tr>
+  <tr><th>Huella SHA-256 de la llave pública</th><td class="mono">{{ ident.huella_llave_publica }}</td></tr>
+</table>
+
+<div class="dos">
+  <section class="caja verde">
+    <h2>Archivos PÚBLICOS: se pueden entregar</h2>
+    <ul class="archivos">
+      {% for a in publicos %}<li><a class="boton chico" href="{{ a.url }}" download="{{ a.nombre }}">Descargar</a> <b>{{ a.nombre }}</b><br><small>{{ a.etiqueta }} · {{ a.tam }} bytes</small></li>{% endfor %}
+      <li><a class="boton chico" href="{{ zip_publico.url }}" download="{{ zip_publico.nombre }}">Descargar</a> <b>{{ zip_publico.nombre }}</b><br><small>Ambos archivos públicos en un .zip</small></li>
+    </ul>
+  </section>
+  <section class="caja rojo">
+    <h2>Archivos PRIVADOS: NO entregar</h2>
+    <ul class="archivos">
+      {% for a in privados %}<li><a class="boton chico" href="{{ a.url }}" download="{{ a.nombre }}">Descargar</a> <b>{{ a.nombre }}</b><br><small>{{ a.etiqueta }} · {{ a.tam }} bytes</small></li>{% endfor %}
+    </ul>
+    <p class="nota">Guárdalos en un lugar seguro. Con el <code>.p12</code> y su contraseña se firma en el paso 2.</p>
+  </section>
+</div>
+
+<h2>Vista previa de la llave pública (PEM)</h2>
+<pre class="codigo">{{ publicos[0].datos.decode() }}</pre>
+
+<h2>Comandos de OpenSSL equivalentes</h2>
+<p>Esta página hace lo mismo que estos comandos de OpenSSL (biblioteca que <code>cryptography</code> utiliza por dentro):</p>
+<pre class="codigo">{{ ident.comandos_openssl }}</pre>
+
+<p><a class="boton" href="{{ url_for('firmar') }}">Continuar: firmar un PDF &rarr;</a>
+   <a class="boton claro" href="{{ url_for('generar') }}">Generar otras llaves</a></p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Firma Digital{% endblock %} · Firma Digital UDS</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
+</head>
+<body>
+  <header class="barra">
+    <div class="barra-in">
+      <a class="marca" href="{{ url_for('inicio') }}"><span class="sello">&#10003;</span> Firma Digital <small>UDS</small></a>
+      <nav>
+        <a href="{{ url_for('inicio') }}" class="{{ 'on' if activa == 'inicio' }}">Inicio</a>
+        <a href="{{ url_for('generar') }}" class="{{ 'on' if activa == 'generar' }}">1. Generar llaves</a>
+        <a href="{{ url_for('firmar') }}" class="{{ 'on' if activa == 'firmar' }}">2. Firmar PDF</a>
+        <a href="{{ url_for('validar') }}" class="{{ 'on' if activa == 'validar' }}">3. Validar firma</a>
+      </nav>
+    </div>
+  </header>
+  <main class="contenido">
+    {% block cuerpo %}{% endblock %}
+  </main>
+  <footer class="pie">
+    Seguridad Informática I · Universidad Domingo Savio · Actividad A5: Firma digital y validación<br>
+    Aplicación de uso didáctico que se ejecuta en tu propia computadora. No guarda llaves ni contraseñas.
+  </footer>
+</body>
+</html>

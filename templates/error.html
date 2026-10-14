@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block titulo %}Error{% endblock %}
+{% block cuerpo %}
+<h1>Ocurrió un problema</h1>
+<div class="aviso rojo">{{ mensaje }}</div>
+<p><a class="boton" href="{{ url_for('inicio') }}">Volver al inicio</a></p>
+{% endblock %}

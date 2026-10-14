@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block titulo %}Inicio{% endblock %}
+{% block cuerpo %}
+<h1>Firma digital de documentos PDF</h1>
+<p class="lead">Genera tus llaves, firma un PDF con tu llave privada y comprueba que la firma es válida. Todo el proceso se realiza en tres pasos desde esta aplicación web.</p>
+
+<div class="tarjetas">
+  <a class="tarjeta" href="{{ url_for('generar') }}">
+    <span class="num">1</span><h2>Generar llaves</h2>
+    <p>Crea un par de llaves RSA y un certificado X.509 con OpenSSL (a través de la biblioteca <code>cryptography</code>). Obtienes la llave pública, el certificado y tu identidad <code>.p12</code>.</p>
+  </a>
+  <a class="tarjeta" href="{{ url_for('firmar') }}">
+    <span class="num">2</span><h2>Firmar un PDF</h2>
+    <p>Sube el PDF y tu identidad. La aplicación calcula el hash SHA-256 del documento, lo firma con tu llave privada e incrusta la firma en el PDF.</p>
+  </a>
+  <a class="tarjeta" href="{{ url_for('validar') }}">
+    <span class="num">3</span><h2>Validar la firma</h2>
+    <p>Sube el PDF firmado y, si quieres, el certificado o la llave pública del firmante. Verás si el documento está íntegro y si la identidad es confiable.</p>
+  </a>
+</div>
+
+<h2>¿Cómo funciona una firma digital?</h2>
+<ol class="pasos">
+  <li>Se calcula el <b>hash SHA-256</b> del contenido del PDF: una huella única de 256 bits.</li>
+  <li>Ese hash se <b>cifra con la llave privada RSA</b> del firmante: eso es la firma.</li>
+  <li>La firma y el <b>certificado X.509</b> (que contiene la llave pública) se incrustan en el PDF.</li>
+  <li>Quien verifica recalcula el hash del documento y lo compara con el que obtiene al <b>descifrar la firma con la llave pública</b>. Si coinciden, el documento no cambió y la firma es auténtica.</li>
+  <li>Si el certificado es <b>autofirmado</b>, nadie externo garantiza la identidad: el verificador debe confiar explícitamente en él (por eso se entrega el certificado o la llave pública).</li>
+</ol>
+
+<div class="aviso ambar">
+  <b>Importante:</b> usa llaves creadas solo para esta actividad. La llave privada y el archivo <code>.p12</code> son secretos: <b>nunca</b> se entregan ni se comparten. Solo se entregan la llave pública y el certificado (<code>.pem</code>).
+</div>
+{% endblock %}
